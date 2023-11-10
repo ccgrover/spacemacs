@@ -32,8 +32,16 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(csv
+   '(html
+     (spell-checking :variables
+                     enable-flyspell-auto-completion nil)
+     (plantuml :variables
+               plantuml-jar-path "~/tools/plantuml/plantuml.jar"
+               plantuml-default-exec-mode 'library)
+     csv
+     restclient
      emacs-lisp
+     semantic ;; for formatting elisp
      git
      helm
      (markdown :variables markdown-live-preview-engine 'vmd)
@@ -42,22 +50,32 @@ This function should only modify configuration layer settings."
      (shell :variables
             shell-default-height 30
             shell-default-position 'bottom)
+     (shell-scripts :variables
+                    shell-scripts-format-on-save t
+                    shell-scripts-backend 'lsp)
      treemacs
      themes-megapack
      yaml
      dap
      ;; Javascript / React
-     javascript
+     (javascript :variables
+                 javascript-import-tool 'import-js
+                 javascript-backend 'lsp
+                 javascript-fmt-tool 'prettier
+                 ;; javascript-fmt-on-save t
+                 )
+     typescript
      react
      ;; Java
      (lsp :variables
+          lsp-completion-no-cache t
           ;; JDKs
           lsp-java-configuration-runtimes '[
-		        (:name "JDK 11"
-				     :path "/usr/lib/jvm/java-11-openjdk/bin/java"
+		        (:name "JavaSE-11"
+				     :path "/usr/lib/jvm/java-11-openjdk/"
              :default t)
-		        (:name "JDK 17"
-				     :path "/usr/lib/jvm/java-17-openjdk/bin/java")
+		        (:name "JavaSE-17"
+				     :path "/usr/lib/jvm/java-17-openjdk/")
           ]
           ;; -javaagent needed for lombok
           lsp-java-vmargs (list
@@ -71,6 +89,7 @@ This function should only modify configuration layer settings."
           lsp-java-completion-favorite-static-members
           [ "org.springframework.test.web.client.match.MockRestRequestMatchers.*"
             "org.assertj.core.api.Assertions.*"
+            "org.assertj.core.api.Assumptions.*"
             "org.junit.jupiter.api.Assertions.*"
             "org.junit.jupiter.api.Assumptions.*"
             "org.junit.jupiter.api.DynamicContainer.*"
@@ -267,7 +286,8 @@ It should only modify the values of Spacemacs settings."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press `SPC T n' to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(smyx
+   dotspacemacs-themes '(kaolin-valley-dark
+                         alect-light
                          spacemacs-dark
                          spacemacs-light)
 
@@ -582,7 +602,9 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-)
+       ;; disable flyspell-mode
+       (setq-default spell-checking-enable-by-default nil)
+       )
 
 
 (defun dotspacemacs/user-load ()
@@ -590,15 +612,35 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
 This function is called only while dumping Spacemacs configuration. You can
 `require' or `load' the libraries of your choice that will be included in the
 dump."
-)
+  )
 
 
 ;; can be added as a hook with (add-hook 'after-save-hook #'spotless-apply) in user-config
-(defun spotless-apply()
+(defun cullen/spotless-apply()
   (interactive)
   (when (eq major-mode 'java-mode)
     (shell-command "mvn -f $(git rev-parse --show-toplevel) spotless:apply"))
   (revert-buffer :ignore-auto :noconfirm))
+
+
+(defun cullen/format-xml()
+  "Format XML file using XmlLint"
+  (interactive)
+  ;; use xmllint to format the current buffer
+  (shell-command-on-region
+   ;; whole buffer
+   (point-min)
+   (point-max)
+   ;; format using xmllint
+   "xmllint --format -"
+   ;; output buffer
+   (current-buffer)
+   ;; replace?
+   t
+   ;; Error buffer
+   "*XmlLint errors*"
+   ;; show error buffer?
+   t))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
@@ -608,9 +650,13 @@ Put your configuration code here, except for variables that should be set
 before packages are loaded."
 
   (spacemacs/declare-prefix-for-mode 'java-mode "mo" "cullen custom")
-  (spacemacs/set-leader-keys-for-major-mode 'java-mode "oo" #'spotless-apply)
-  (setq projectile-project-search-path '("~/workspace/"))
+  (spacemacs/set-leader-keys-for-major-mode 'java-mode "oo" #'cullen/spotless-apply)
+  (setq projectile-project-search-path '(
+        ("~/workspace/" . 1)
+        ))
   (setq projectile-create-missing-test-files t)
+  (with-eval-after-load 'undo-tree
+    (setq undo-tree-auto-save-history nil))
 )
 
 
@@ -627,7 +673,7 @@ This function is called at the very end of Spacemacs initialization."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(csv-mode ac-ispell afternoon-theme alect-themes ample-theme ample-zen-theme anti-zenburn-theme apropospriate-theme auto-complete auto-dictionary auto-yasnippet badwolf-theme birds-of-paradise-plus-theme bubbleberry-theme busybee-theme cherry-blossom-theme chocolate-theme clues-theme color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow cyberpunk-theme dakrone-theme darkmine-theme darkokai-theme darktooth-theme django-theme doom-themes dracula-theme esh-help eshell-prompt-extras eshell-z espresso-theme evil-org exotica-theme eziam-themes farmhouse-themes flatland-theme flatui-theme flycheck-pos-tip pos-tip flyspell-correct-helm flyspell-correct fuzzy gandalf-theme gh-md git-link git-messenger git-modes git-timemachine gitignore-templates gnuplot gotham-theme grandshell-theme groovy-imports pcache groovy-mode gruber-darker-theme gruvbox-theme hc-zenburn-theme helm-c-yasnippet helm-company company helm-git-grep helm-ls-git helm-lsp helm-org-rifle hemisu-theme heroku-theme htmlize inkpot-theme ir-black-theme jazz-theme jbeans-theme kaolin-themes light-soap-theme lsp-java dap-mode lsp-docker bui lsp-origami origami lsp-treemacs lsp-ui lsp-mode lush-theme madhat2r-theme majapahit-themes markdown-toc material-theme maven-test-mode minimal-theme mmm-mode modus-themes moe-theme molokai-theme monochrome-theme monokai-theme multi-term multi-vterm xref mustang-theme mvn naquadah-theme noctilux-theme obsidian-theme occidental-theme oldlace-theme omtose-phellack-theme org-cliplink org-contrib org-download org-mime org-pomodoro alert log4e gntp org-present org-projectile org-project-capture org-category-capture org-rich-yank organic-green-theme orgit-forge orgit forge yaml markdown-mode ghub closql emacsql treepy org phoenix-dark-mono-theme phoenix-dark-pink-theme planet-theme professional-theme purple-haze-theme railscasts-theme rebecca-theme reverse-theme seti-theme shell-pop smeargle smyx-theme soft-charcoal-theme soft-morning-theme soft-stone-theme solarized-theme soothe-theme autothemer spacegray-theme subatomic-theme subatomic256-theme sublime-themes sunny-day-theme tango-2-theme tango-plus-theme tangotango-theme tao-theme terminal-here toxi-theme treemacs-magit magit seq magit-section git-commit with-editor transient twilight-anti-bright-theme twilight-bright-theme twilight-theme ujelly-theme underwater-theme vterm white-sand-theme xterm-color yaml-mode yasnippet-snippets yasnippet zen-and-art-theme zenburn-theme zonokai-emacs ace-jump-helm-line ace-link aggressive-indent all-the-icons auto-compile auto-highlight-symbol centered-cursor-mode clean-aindent-mode column-enforce-mode define-word devdocs dired-quick-sort drag-stuff dumb-jump editorconfig elisp-def elisp-slime-nav emr clang-format list-utils eval-sexp-fu evil-anzu anzu evil-args evil-cleverparens paredit evil-collection annalist evil-easymotion evil-escape evil-exchange evil-goggles evil-iedit-state iedit evil-indent-plus evil-lion evil-lisp-state evil-matchit evil-mc evil-nerd-commenter evil-numbers evil-surround evil-textobj-line evil-tutor evil-unimpaired evil-visual-mark-mode evil-visualstar expand-region eyebrowse fancy-battery flx-ido flx flycheck-elsa flycheck-package package-lint flycheck golden-ratio google-translate helm-ag helm-descbinds helm-make helm-mode-manager helm-org helm-projectile helm-purpose helm-swoop helm-themes helm-xref helm wfnames helm-core hide-comnt highlight-indentation highlight-numbers parent-mode highlight-parentheses hl-todo compat hungry-delete indent-guide info+ inspector link-hint lorem-ipsum macrostep multi-line shut-up nameless open-junk-file org-superstar overseer f pkg-info epl paradox spinner password-generator popup popwin quickrun rainbow-delimiters request restart-emacs smartparens space-doc spaceline powerline spacemacs-purpose-popwin spacemacs-whitespace-cleanup string-edit-at-point string-inflection symbol-overlay symon term-cursor toc-org treemacs-evil treemacs-icons-dired treemacs-persp persp-mode treemacs-projectile treemacs projectile cfrs ht pfuture ace-window avy posframe s undo-tree queue uuidgen vi-tilde-fringe vim-powerline volatile-highlights window-purpose imenu-list winum dash writeroom-mode visual-fill-column ws-butler async bind-map diminish dotenv-mode evil-evilified-state holy-mode hybrid-mode evil goto-chg hydra lv pcre2el use-package bind-key which-key)))
+   '(company-web web-completion-data counsel-css counsel swiper ivy helm-css-scss impatient-mode pug-mode sass-mode haml-mode scss-mode slim-mode tagedit add-node-modules-path emmet-mode import-js grizzl typescript-mode web-mode csv-mode ac-ispell afternoon-theme alect-themes ample-theme ample-zen-theme anti-zenburn-theme apropospriate-theme auto-complete auto-dictionary auto-yasnippet badwolf-theme birds-of-paradise-plus-theme bubbleberry-theme busybee-theme cherry-blossom-theme chocolate-theme clues-theme color-theme-sanityinc-solarized color-theme-sanityinc-tomorrow cyberpunk-theme dakrone-theme darkmine-theme darkokai-theme darktooth-theme django-theme doom-themes dracula-theme esh-help eshell-prompt-extras eshell-z espresso-theme evil-org exotica-theme eziam-themes farmhouse-themes flatland-theme flatui-theme flycheck-pos-tip pos-tip flyspell-correct-helm flyspell-correct fuzzy gandalf-theme gh-md git-link git-messenger git-modes git-timemachine gitignore-templates gnuplot gotham-theme grandshell-theme groovy-imports pcache groovy-mode gruber-darker-theme gruvbox-theme hc-zenburn-theme helm-c-yasnippet helm-company company helm-git-grep helm-ls-git helm-lsp helm-org-rifle hemisu-theme heroku-theme htmlize inkpot-theme ir-black-theme jazz-theme jbeans-theme kaolin-themes light-soap-theme lsp-java dap-mode lsp-docker bui lsp-origami origami lsp-treemacs lsp-ui lsp-mode lush-theme madhat2r-theme majapahit-themes markdown-toc material-theme maven-test-mode minimal-theme mmm-mode modus-themes moe-theme molokai-theme monochrome-theme monokai-theme multi-term multi-vterm xref mustang-theme mvn naquadah-theme noctilux-theme obsidian-theme occidental-theme oldlace-theme omtose-phellack-theme org-cliplink org-contrib org-download org-mime org-pomodoro alert log4e gntp org-present org-projectile org-project-capture org-category-capture org-rich-yank organic-green-theme orgit-forge orgit forge yaml markdown-mode ghub closql emacsql treepy org phoenix-dark-mono-theme phoenix-dark-pink-theme planet-theme professional-theme purple-haze-theme railscasts-theme rebecca-theme reverse-theme seti-theme shell-pop smeargle smyx-theme soft-charcoal-theme soft-morning-theme soft-stone-theme solarized-theme soothe-theme autothemer spacegray-theme subatomic-theme subatomic256-theme sublime-themes sunny-day-theme tango-2-theme tango-plus-theme tangotango-theme tao-theme terminal-here toxi-theme treemacs-magit magit seq magit-section git-commit with-editor transient twilight-anti-bright-theme twilight-bright-theme twilight-theme ujelly-theme underwater-theme vterm white-sand-theme xterm-color yaml-mode yasnippet-snippets yasnippet zen-and-art-theme zenburn-theme zonokai-emacs ace-jump-helm-line ace-link aggressive-indent all-the-icons auto-compile auto-highlight-symbol centered-cursor-mode clean-aindent-mode column-enforce-mode define-word devdocs dired-quick-sort drag-stuff dumb-jump editorconfig elisp-def elisp-slime-nav emr clang-format list-utils eval-sexp-fu evil-anzu anzu evil-args evil-cleverparens paredit evil-collection annalist evil-easymotion evil-escape evil-exchange evil-goggles evil-iedit-state iedit evil-indent-plus evil-lion evil-lisp-state evil-matchit evil-mc evil-nerd-commenter evil-numbers evil-surround evil-textobj-line evil-tutor evil-unimpaired evil-visual-mark-mode evil-visualstar expand-region eyebrowse fancy-battery flx-ido flx flycheck-elsa flycheck-package package-lint flycheck golden-ratio google-translate helm-ag helm-descbinds helm-make helm-mode-manager helm-org helm-projectile helm-purpose helm-swoop helm-themes helm-xref helm wfnames helm-core hide-comnt highlight-indentation highlight-numbers parent-mode highlight-parentheses hl-todo compat hungry-delete indent-guide info+ inspector link-hint lorem-ipsum macrostep multi-line shut-up nameless open-junk-file org-superstar overseer f pkg-info epl paradox spinner password-generator popup popwin quickrun rainbow-delimiters request restart-emacs smartparens space-doc spaceline powerline spacemacs-purpose-popwin spacemacs-whitespace-cleanup string-edit-at-point string-inflection symbol-overlay symon term-cursor toc-org treemacs-evil treemacs-icons-dired treemacs-persp persp-mode treemacs-projectile treemacs projectile cfrs ht pfuture ace-window avy posframe s undo-tree queue uuidgen vi-tilde-fringe vim-powerline volatile-highlights window-purpose imenu-list winum dash writeroom-mode visual-fill-column ws-butler async bind-map diminish dotenv-mode evil-evilified-state holy-mode hybrid-mode evil goto-chg hydra lv pcre2el use-package bind-key which-key)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
