@@ -17,77 +17,87 @@ This function should only modify configuration layer settings."
    ;; listed in `dotspacemacs-configuration-layers'. `nil' disable the lazy
    ;; installation feature and you have to explicitly list a layer in the
    ;; variable `dotspacemacs-configuration-layers' to install it.
-   ;; (default 'unused)
-   dotspacemacs-enable-lazy-installation
-   'unused
+   ;; (default 'unused) dotspacemacs-enable-lazy-installation 'unused
    ;; If non-nil then Spacemacs will ask for confirmation before installing
-   ;; a layer lazily. (default t)
-   dotspacemacs-ask-for-lazy-installation
-   t
+   ;; a layer lazily. (default t) dotspacemacs-ask-for-lazy-installation t
    ;; List of additional paths where to look for configuration layers.
-   ;; Paths must have a trailing slash (i.e. "~/.mycontribs/")
-   dotspacemacs-configuration-layer-path
-   '()
+   ;; Paths must have a trailing slash (i.e. "~/.mycontribs/") dotspacemacs-configuration-layer-path '()
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(html (spell-checking :variables enable-flyspell-auto-completion
-                          nil)
-          (plantuml :variables plantuml-jar-path
-                    "~/tools/plantuml/plantuml.jar" plantuml-default-exec-mode
-                    'library)
-          csv
-          restclient
-          emacs-lisp
-          semantic ;; for formatting elisp
-          git
+   '(
+          ;; core
           helm
           (markdown :variables markdown-live-preview-engine'vmd)
           multiple-cursors
+          (spell-checking :variables
+                          enable-flyspell-auto-completion nil)
           org
+          treemacs
+          themes-megapack
+          ;; documentation
+          (plantuml :variables plantuml-jar-path
+                    "~/tools/plantuml/plantuml.jar" plantuml-default-exec-mode
+                    'library)
+          ;; utilities
+          git
+          restclient
+          ;; tools and languages
+          ansible
+          html
+          csv
+          yaml
+          emacs-lisp
+          semantic ;; for formatting elisp
           (shell :variables shell-default-height
                  30 shell-default-position 'bottom)
           (shell-scripts :variables shell-scripts-format-on-save
                          t shell-scripts-backend 'lsp)
-          treemacs
-          themes-megapack
-          yaml
-          dap
+          dap ;; for debugging & running tests
           ;; Javascript / React
-          (javascript :variables javascript-import-tool'import-js
-                      javascript-backend 'lsp javascript-fmt-tool
-                      'prettier
+          (javascript :variables
+                      javascript-import-tool 'import-js
+                      javascript-backend 'lsp
+                      javascript-fmt-tool 'prettier
                       ;; javascript-fmt-on-save t
                       )
           typescript
           react
           ;; Java
-          (lsp :variables lsp-completion-no-cache
-               t
+          (lsp :variables
+               lsp-completion-no-cache t
                ;; JDKs
                lsp-java-configuration-runtimes
                '[(:name "JavaSE-11" :path "/usr/lib/jvm/java-11-openjdk/"
                         :default t)
                  (:name "JavaSE-17" :path "/usr/lib/jvm/java-17-openjdk/")]
-               ;; -javaagent needed for lombok
 
+               ;; -javaagent needed for lombok
                lsp-java-vmargs
-               (list "-Xmx1G" "-XX:+UseG1GC" "-XX:+UseStringDeduplication"
+               (list "-Xmx2G" "-XX:+UseG1GC" "-XX:+UseStringDeduplication"
                      "-javaagent:/home/cgrover/tools/lombok/lombok.jar")
+
                ;; do not format since Spotless handles that
                lsp-java-format-enabled
                nil
                ;; defaults from LSP Java not maintained
                lsp-java-completion-favorite-static-members
-               ["org.springframework.test.web.client.match.MockRestRequestMatchers.*"
-                "org.assertj.core.api.Assertions.*" "org.assertj.core.api.Assumptions.*"
-                "org.junit.jupiter.api.Assertions.*" "org.junit.jupiter.api.Assumptions.*"
+               ["java.util.stream.Collectors.*"
+                "org.springframework.test.web.client.match.MockRestRequestMatchers.*"
+                "org.assertj.core.api.Assertions.*"
+                "org.assertj.core.api.Assumptions.*"
+                "org.junit.jupiter.api.Assertions.*"
+                "org.junit.jupiter.api.Assumptions.*"
                 "org.junit.jupiter.api.DynamicContainer.*"
-                "org.junit.jupiter.api.DynamicTest.*" "org.mockito.Mockito.*"
-                "org.mockito.ArgumentMatchers.*" "org.mockito.Answers.*"
-                "org.junit.Assert.*" "org.junit.Assume.*"])
-          (java :config (add-hook 'java-mode-hook 'lsp)(add-hook 'lsp-mode-hook #'lsp-lens-mode)(add-hook 'java-mode-hook #'lsp-java-boot-lens-mode):variables
-                java-backend
-                'lsp))
+                "org.junit.jupiter.api.DynamicTest.*"
+                "org.junit.jupiter.params.provider.Arguments.*"
+                "org.mockito.Mockito.*"
+                "org.mockito.ArgumentMatchers.*"
+                "org.mockito.Answers.*"
+                "org.junit.Assert.*"
+                "org.junit.Assume.*"])
+          (java :config (add-hook 'java-mode-hook 'lsp)(add-hook 'lsp-mode-hook #'lsp-lens-mode)(add-hook 'java-mode-hook #'lsp-java-boot-lens-mode)
+                :variables
+                java-backend 'lsp))
    ;; List of additional packages that will be installed without being wrapped
    ;; in a layer (generally the packages are installed only and should still be
    ;; loaded using load/require/use-package in the user-config section below in
@@ -133,25 +143,19 @@ It should only modify the values of Spacemacs settings."
    ;; (default nil) dotspacemacs-enable-emacs-pdumper nil
    ;; Name of executable file pointing to emacs 27+. This executable must be
    ;; in your PATH.
-   ;; (default "emacs")
-   dotspacemacs-emacs-pdumper-executable-file
-   "emacs"
+   ;; (default "emacs") dotspacemacs-emacs-pdumper-executable-file "emacs"
    ;; Name of the Spacemacs dump file. This is the file will be created by the
    ;; portable dumper in the cache directory under dumps sub-directory.
    ;; To load it when starting Emacs add the parameter `--dump-file'
    ;; when invoking Emacs 27.1 executable on the command line, for instance:
    ;;   ./emacs --dump-file=$HOME/.emacs.d/.cache/dumps/spacemacs-27.1.pdmp
-   ;; (default (format "spacemacs-%s.pdmp" emacs-version))
-   dotspacemacs-emacs-dumper-dump-file
-   (format "spacemacs-%s.pdmp" emacs-version)
+   ;; (default (format "spacemacs-%s.pdmp" emacs-version)) dotspacemacs-emacs-dumper-dump-file (format "spacemacs-%s.pdmp" emacs-version)
    ;; If non-nil ELPA repositories are contacted via HTTPS whenever it's
    ;; possible. Set it to nil if you have no way to use HTTPS in your
    ;; environment, otherwise it is strongly recommended to let it set to t.
    ;; This variable has no effect if Emacs is launched with the parameter
    ;; `--insecure' which forces the value of this variable to nil.
-   ;; (default t)
-   dotspacemacs-elpa-https
-   t
+   ;; (default t) dotspacemacs-elpa-https t
    ;; Maximum allowed time in seconds to contact an ELPA repository.
    ;; (default 5)
    dotspacemacs-elpa-timeout
@@ -608,12 +612,9 @@ dump.")
   (interactive)
   ;; use xmllint to format the current buffer
   (shell-command-on-region
-   ;; whole buffer (point-min)
-   (point-max)
-   ;; format using xmllint
-   "xmllint --format -"
-   ;; output buffer
-   (current-buffer)
+   ;; whole buffer (point-min) (point-max)
+   ;; format using xmllint "xmllint --format -"
+   ;; output buffer (current-buffer)
    ;; replace?
    t
    ;; Error buffer
@@ -634,6 +635,8 @@ before packages are loaded."
   (setq projectile-project-search-path '(("~/workspace/" . 1)))
   (setq projectile-create-missing-test-files
         t)
+  ;; the below probably needs to match lsp-java
+  ;; (setq dap-java-java-command (substitute-env-vars "${JAVA_HOME}bin/java"))
   (with-eval-after-load 'undo-tree
     (setq undo-tree-auto-save-history nil)))
 
