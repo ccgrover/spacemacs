@@ -43,15 +43,17 @@ This function should only modify configuration layer settings."
           restclient
           ;; tools and languages
           ansible
-          html
           csv
+          html
           yaml
+          (python :variables python-backend 'anaconda)
           emacs-lisp
           semantic ;; for formatting elisp
           (shell :variables shell-default-height
                  30 shell-default-position 'bottom)
-          (shell-scripts :variables shell-scripts-format-on-save
-                         t shell-scripts-backend 'lsp)
+          (shell-scripts :variables
+                         shell-scripts-format-on-save t
+                         shell-scripts-backend 'lsp)
           dap ;; for debugging & running tests
           ;; Javascript / React
           (javascript :variables
@@ -67,9 +69,11 @@ This function should only modify configuration layer settings."
                lsp-completion-no-cache t
                ;; JDKs
                lsp-java-configuration-runtimes
-               '[(:name "JavaSE-11" :path "/usr/lib/jvm/java-11-openjdk/"
+               '[(:name "JavaSE-11"
+                        :path "/usr/lib/jvm/java-11-openjdk/"
                         :default t)
-                 (:name "JavaSE-17" :path "/usr/lib/jvm/java-17-openjdk/")]
+                 (:name "JavaSE-17"
+                        :path "/usr/lib/jvm/java-17-openjdk/")]
 
                ;; -javaagent needed for lombok
                lsp-java-vmargs
@@ -83,6 +87,9 @@ This function should only modify configuration layer settings."
                lsp-java-completion-favorite-static-members
                ["java.util.stream.Collectors.*"
                 "org.springframework.test.web.client.match.MockRestRequestMatchers.*"
+                "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*"
+                "org.springframework.test.web.servlet.result.MockMvcResultMatchers.*"
+                "org.springframework.test.web.servlet.result.MockMvcResultHandlers.*"
                 "org.assertj.core.api.Assertions.*"
                 "org.assertj.core.api.Assumptions.*"
                 "org.junit.jupiter.api.Assertions.*"
@@ -274,8 +281,11 @@ It should only modify the values of Spacemacs settings."
    ;; Press `SPC T n' to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
    dotspacemacs-themes
-   '(kaolin-valley-dark alect-light spacemacs-dark
-                        spacemacs-light)
+   '(flatland
+     kaolin-valley-dark
+     alect-light
+     spacemacs-dark
+     spacemacs-light)
    ;; Set the theme for the Spaceline. Supported themes are `spacemacs',
    ;; `all-the-icons', `custom', `doom', `vim-powerline' and `vanilla'. The
    ;; first three are spaceline themes. `doom' is the doom-emacs mode-line.
@@ -606,6 +616,11 @@ dump.")
     (shell-command "mvn -f $(git rev-parse --show-toplevel) spotless:apply"))
   (revert-buffer :ignore-auto :noconfirm))
 
+(defun cullen/generate-spec ()
+  (interactive)
+  (when (eq major-mode 'java-mode)
+    (shell-command "mvn -f $(git rev-parse --show-toplevel) clean spotless:apply verify -Pgenerate-docs -DskipTests"))
+  (revert-buffer :ignore-auto :noconfirm))
 
 (defun cullen/format-xml ()
   "Format XML file using XmlLint"
@@ -632,13 +647,21 @@ before packages are loaded."
     "mo" "cullen custom")
   (spacemacs/set-leader-keys-for-major-mode
     'java-mode "oo" #'cullen/spotless-apply)
+  (spacemacs/set-leader-keys-for-major-mode
+    'java-mode "od" #'cullen/generate-spec)
   (setq projectile-project-search-path '(("~/workspace/" . 1)))
   (setq projectile-create-missing-test-files
         t)
   ;; the below probably needs to match lsp-java
   ;; (setq dap-java-java-command (substitute-env-vars "${JAVA_HOME}bin/java"))
   (with-eval-after-load 'undo-tree
-    (setq undo-tree-auto-save-history nil)))
+    (setq undo-tree-auto-save-history nil))
+  ;; limit maximum compilation buffer line count
+  (setq comint-buffer-maximum-size 1024)
+  (add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
+  (add-hook 'comint-output-filter-functions #'comint-truncate-buffer)
+  (add-hook 'compilation-filter-hook 'comint-truncate-buffer)
+)
 
 
 ;; Do not write anything past this comment. This is where Emacs will
