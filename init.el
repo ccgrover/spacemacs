@@ -32,11 +32,7 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(html
-     restclient
-     yaml
-     csv
-     (python :variables python-backend 'anaconda)
+   '(javascript
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -44,12 +40,62 @@ This function should only modify configuration layer settings."
      ;; ----------------------------------------------------------------
      ;; auto-completion
      ;; better-defaults
+     yaml
+     markdown
      emacs-lisp
      git
-     (helm :pin melpa-stable)
-     ;; lsp
+     helm
+
+     ;; Java config
+     (java :config
+           (add-hook 'java-mode-hook #'lsp-java-boot-lens-mode)
+           (add-hook 'lsp-mode-hook #'lsp-lens-mode)
+           :variables
+           java-backend 'lsp)
+     ;; visual debugger & test browser
+     dap
+
+     (lsp :variables
+          ;; ↓↓↓ CONFIRMED FINE ↓↓↓
+          lsp-java-format-enabled  nil
+          lsp-java-configuration-runtimes
+          '[
+            (:name "JavaSE-17"
+                   :path "/usr/lib/jvm/java-17-openjdk/"
+                   :default t)
+            ]
+          lsp-java-vmargs
+          (list "-Xmx2G"
+                "-XX:+UseG1GC"
+                "-XX:+UseStringDeduplication"
+                "-javaagent:/home/cgrover/tools/lombok/lombok.jar")
+          lsp-java-completion-favorite-static-members
+          ["java.util.stream.Collectors.*"
+           ;; ArchUnit entrypoints
+           "com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*"
+           "com.tngtech.archunit.library.Architectures.*"
+           ;; Spring test utilities
+           "org.springframework.test.web.client.match.MockRestRequestMatchers.*"
+           "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*"
+           "org.springframework.test.web.servlet.result.MockMvcResultMatchers.*"
+           "org.springframework.test.web.servlet.result.MockMvcResultHandlers.*"
+           ;; other common testing libraries
+           "org.assertj.core.api.Assertions.*"
+           "org.assertj.core.api.Assumptions.*"
+           "org.junit.jupiter.api.Assertions.*"
+           "org.junit.jupiter.api.Assumptions.*"
+           "org.junit.jupiter.api.DynamicContainer.*"
+           "org.junit.jupiter.api.DynamicTest.*"
+           "org.junit.jupiter.params.provider.Arguments.*"
+           "org.mockito.Mockito.*"
+           "org.mockito.ArgumentMatchers.*"
+           "org.mockito.Answers.*"
+           "org.junit.Assert.*"
+           "org.junit.Assume.*"]
+          )
+
      ;; markdown
-     (multiple-cursors :variables multiple-cursors-backend 'evil-mc)
+     multiple-cursors
      ;; org
      ;; (shell :variables
      ;;        shell-default-height 30
@@ -57,51 +103,7 @@ This function should only modify configuration layer settings."
      ;; spell-checking
      ;; syntax-checking
      ;; version-control
-     shell-scripts
-     treemacs
-     ;; java
-     (lsp :variables
-          lsp-completion-no-cache t
-          ;; JDKs
-          lsp-java-configuration-runtimes
-            '[(:name "JavaSE-11"
-               :path "/usr/lib/jvm/java-11-openjdk/"
-               :default t)
-              (:name "JavaSE-17"
-               :path "/usr/lib/jvm/java-17-openjdk/")]
-          ;; -javaagent needed for lombok
-          lsp-java-vmargs
-            (list "-Xmx2G" "-XX:+UseG1GC" "-XX:+UseStringDeduplication"
-                  "-javaagent:/home/cgrover/tools/lombok/lombok.jar")
-
-          ;; do not format since Spotless handles that
-          lsp-java-format-enabled  nil
-          ;; defaults from LSP Java not maintained
-          lsp-java-completion-favorite-static-members
-            ["java.util.stream.Collectors.*"
-             "org.springframework.test.web.client.match.MockRestRequestMatchers.*"
-             "org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*"
-             "org.springframework.test.web.servlet.result.MockMvcResultMatchers.*"
-             "org.springframework.test.web.servlet.result.MockMvcResultHandlers.*"
-             "org.assertj.core.api.Assertions.*"
-             "org.assertj.core.api.Assumptions.*"
-             "org.junit.jupiter.api.Assertions.*"
-             "org.junit.jupiter.api.Assumptions.*"
-             "org.junit.jupiter.api.DynamicContainer.*"
-             "org.junit.jupiter.api.DynamicTest.*"
-             "org.junit.jupiter.params.provider.Arguments.*"
-             "org.mockito.Mockito.*"
-             "org.mockito.ArgumentMatchers.*"
-             "org.mockito.Answers.*"
-             "org.junit.Assert.*"
-             "org.junit.Assume.*"])
-     (java :config
-             (add-hook 'java-mode-hook #'lsp-java-boot-lens-mode)
-             (add-hook 'lsp-mode-hook #'lsp-lens-mode)
-           :variables
-             java-backend 'lsp)
-     dap ; for debugging and running tests
-     )
+     treemacs)
 
 
    ;; List of additional packages that will be installed without being wrapped
@@ -131,9 +133,9 @@ This function should only modify configuration layer settings."
 
 (defun dotspacemacs/init ()
   "Initialization:
-This function is called at the very beginning of Spacemacs startup,
-before layer configuration.
-It should only modify the values of Spacemacs settings."
+                This function is called at the very beginning of Spacemacs startup,
+                before layer configuration.
+                It should only modify the values of Spacemacs settings."
   ;; This setq-default sexp is an exhaustive list of all the supported
   ;; spacemacs settings.
   (setq-default
@@ -159,14 +161,6 @@ It should only modify the values of Spacemacs settings."
    ;;   ./emacs --dump-file=$HOME/.emacs.d/.cache/dumps/spacemacs-27.1.pdmp
    ;; (default (format "spacemacs-%s.pdmp" emacs-version))
    dotspacemacs-emacs-dumper-dump-file (format "spacemacs-%s.pdmp" emacs-version)
-
-   ;; If non-nil ELPA repositories are contacted via HTTPS whenever it's
-   ;; possible. Set it to nil if you have no way to use HTTPS in your
-   ;; environment, otherwise it is strongly recommended to let it set to t.
-   ;; This variable has no effect if Emacs is launched with the parameter
-   ;; `--insecure' which forces the value of this variable to nil.
-   ;; (default t)
-   dotspacemacs-elpa-https t
 
    ;; Maximum allowed time in seconds to contact an ELPA repository.
    ;; (default 5)
@@ -305,7 +299,9 @@ It should only modify the values of Spacemacs settings."
    ;; (default t)
    dotspacemacs-colorize-cursor-according-to-state t
 
-   ;; Default font or prioritized list of fonts. The `:size' can be specified as
+   ;; Default font or prioritized list of fonts. This setting has no effect when
+   ;; running Emacs in terminal. The font set here will be used for default and
+   ;; fixed-pitch faces. The `:size' can be specified as
    ;; a non-negative integer (pixel size), or a floating-point (point size).
    ;; Point size is recommended, because it's device independent. (default 10.0)
    dotspacemacs-default-font '("Source Code Pro"
@@ -386,6 +382,10 @@ It should only modify the values of Spacemacs settings."
    ;; Which-key frame position. Possible values are `right', `bottom' and
    ;; `right-then-bottom'. right-then-bottom tries to display the frame to the
    ;; right; if there is insufficient space it displays it at the bottom.
+   ;; It is also possible to use a posframe with the following cons cell
+   ;; `(posframe . position)' where position can be one of `center',
+   ;; `top-center', `bottom-center', `top-left-corner', `top-right-corner',
+   ;; `top-right-corner', `bottom-left-corner' or `bottom-right-corner'
    ;; (default 'bottom)
    dotspacemacs-which-key-position 'bottom
 
@@ -395,6 +395,11 @@ It should only modify the values of Spacemacs settings."
    ;; displays the buffer in a same-purpose window even if the buffer can be
    ;; displayed in the current window. (default nil)
    dotspacemacs-switch-to-buffer-prefers-purpose nil
+
+   ;; Whether side windows (such as those created by treemacs or neotree)
+   ;; are kept or minimized by `spacemacs/toggle-maximize-window' (SPC w m).
+   ;; (default t)
+   dotspacemacs-maximize-window-keep-side-windows t
 
    ;; If non-nil a progress bar is displayed when spacemacs is loading. This
    ;; may increase the boot time on some systems and emacs builds, set it to
@@ -472,7 +477,7 @@ It should only modify the values of Spacemacs settings."
    ;;   :size-limit-kb 1000)
    ;; When used in a plist, `visual' takes precedence over `relative'.
    ;; (default nil)
-   dotspacemacs-line-numbers t
+   dotspacemacs-line-numbers nil
 
    ;; Code folding method. Possible values are `evil', `origami' and `vimish'.
    ;; (default 'evil)
@@ -517,6 +522,13 @@ It should only modify the values of Spacemacs settings."
    ;; (default '("rg" "ag" "pt" "ack" "grep"))
    dotspacemacs-search-tools '("rg" "ag" "pt" "ack" "grep")
 
+   ;; The backend used for undo/redo functionality. Possible values are
+   ;; `undo-fu', `undo-redo' and `undo-tree' see also `evil-undo-system'.
+   ;; Note that saved undo history does not get transferred when changing
+   ;; your undo system. The default is currently `undo-fu' as `undo-tree'
+   ;; is not maintained anymore and `undo-redo' is very basic."
+   dotspacemacs-undo-system 'undo-fu
+
    ;; Format specification for setting the frame title.
    ;; %a - the `abbreviated-file-name', or `buffer-name'
    ;; %t - `projectile-project-name'
@@ -552,6 +564,9 @@ It should only modify the values of Spacemacs settings."
    ;; to aggressively delete empty line and long sequences of whitespace,
    ;; `trailing' to delete only the whitespace at end of lines, `changed' to
    ;; delete only whitespace for changed lines or `nil' to disable cleanup.
+   ;; The variable `global-spacemacs-whitespace-cleanup-modes' controls
+   ;; which major modes have whitespace cleanup enabled or disabled
+   ;; by default.
    ;; (default nil)
    dotspacemacs-whitespace-cleanup nil
 
@@ -595,7 +610,7 @@ default it calls `spacemacs/load-spacemacs-env' which loads the environment
 variables declared in `~/.spacemacs.env' or `~/.spacemacs.d/.spacemacs.env'.
 See the header of this file for more information."
   (spacemacs/load-spacemacs-env)
-)
+  )
 
 (defun dotspacemacs/user-init ()
   "Initialization for user code:
@@ -603,7 +618,7 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
-       )
+  )
 
 
 (defun dotspacemacs/user-load ()
@@ -626,20 +641,17 @@ dump."
     (shell-command "mvn -f $(git rev-parse --show-toplevel) clean spotless:apply verify -Pgenerate-docs -DskipTests"))
   (revert-buffer :ignore-auto :noconfirm))
 
-(defun cullen/format-xml ()
-  "Format XML file using XmlLint"
+(defun cullen/maven-verify ()
   (interactive)
-  ;; use xmllint to format the current buffer
-  (shell-command-on-region
-   ;; whole buffer (point-min) (point-max)
-   ;; format using xmllint "xmllint --format -"
-   ;; output buffer (current-buffer)
-   ;; replace?
-   t
-   ;; Error buffer
-   "*XmlLint errors*"
-   ;; show error buffer?
-   t))
+  (when (eq major-mode 'java-mode)
+    (shell-command "mvn -f $(git rev-parse --show-toplevel) clean verify"))
+  (revert-buffer :ignore-auto :noconfirm))
+
+(defun cullen/test-compile ()
+  (interactive)
+  (when (eq major-mode 'java-mode)
+    (shell-command "mvn -f $(git rev-parse --show-toplevel) clean spotless:apply test-compile"))
+  (revert-buffer :ignore-auto :noconfirm))
 
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
@@ -647,15 +659,24 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+
+  ;; Projects in workspace folder are automatically discovered
+  (setq projectile-project-search-path '(("~/workspace/" . 1)))
+  (setq projectile-create-missing-test-files t)
+
+  (require 'lsp-java-boot)
+
   (spacemacs/declare-prefix-for-mode 'java-mode
     "mo" "cullen custom")
   (spacemacs/set-leader-keys-for-major-mode
     'java-mode "oo" #'cullen/spotless-apply)
   (spacemacs/set-leader-keys-for-major-mode
     'java-mode "od" #'cullen/generate-spec)
-  (setq projectile-project-search-path '(("~/workspace/" . 1)))
-  (setq projectile-create-missing-test-files t)
-)
+  (spacemacs/set-leader-keys-for-major-mode
+    'java-mode "ov" #'cullen/maven-verify)
+  (spacemacs/set-leader-keys-for-major-mode
+    'java-mode "oc" #'cullen/test-compile)
+  )
 
 
 ;; Do not write anything past this comment. This is where Emacs will
@@ -665,17 +686,17 @@ before packages are loaded."
 This is an auto-generated function, do not modify its content directly, use
 Emacs customize menu instead.
 This function is called at the very end of Spacemacs initialization."
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(yasnippet-snippets yapfify ws-butler writeroom-mode winum which-key volatile-highlights vim-powerline vi-tilde-fringe uuidgen undo-tree treemacs-projectile treemacs-persp treemacs-magit treemacs-icons-dired treemacs-evil toc-org term-cursor symon symbol-overlay string-inflection string-edit-at-point sphinx-doc spacemacs-whitespace-cleanup spacemacs-purpose-popwin spaceline space-doc smeargle restart-emacs rainbow-delimiters quickrun pytest pylookup pyenv-mode pydoc py-isort popwin poetry pippel pipenv pip-requirements pcre2el password-generator paradox overseer org-superstar open-junk-file nose nameless mvn multi-line maven-test-mode macrostep lsp-ui lsp-python-ms lsp-pyright lsp-origami lsp-java lorem-ipsum live-py-mode link-hint kaolin-themes inspector info+ indent-guide importmagic hybrid-mode hungry-delete holy-mode hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt helm-xref helm-themes helm-swoop helm-pydoc helm-purpose helm-projectile helm-org helm-mode-manager helm-make helm-lsp helm-ls-git helm-git-grep helm-descbinds helm-company helm-c-yasnippet helm-ag groovy-mode groovy-imports google-translate golden-ratio gitignore-templates git-timemachine git-modes git-messenger git-link fuzzy forge flycheck-pos-tip flycheck-package flycheck-elsa flx-ido flatland-theme fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-evilified-state evil-escape evil-easymotion evil-collection evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav elisp-def editorconfig dumb-jump drag-stuff dotenv-mode dired-quick-sort diminish devdocs define-word cython-mode csv-mode company-anaconda column-enforce-mode code-cells clean-aindent-mode centered-cursor-mode blacken auto-yasnippet auto-highlight-symbol auto-compile all-the-icons alect-themes aggressive-indent ace-link ace-jump-helm-line ac-ispell)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-)
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(package-selected-packages
+     '(add-node-modules-path counsel-gtags counsel swiper ivy ggtags impatient-mode htmlize import-js grizzl js-doc js2-refactor multiple-cursors livid-mode nodejs-repl npm-mode prettier-js skewer-mode js2-mode simple-httpd tern web-beautify yaml-mode company-emoji company emoji-cheat-sheet-plus gh-md markdown-toc markdown-mode valign vmd-mode ws-butler writeroom-mode winum which-key vundo volatile-highlights vim-powerline vi-tilde-fringe uuidgen undo-fu-session undo-fu treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil toc-org term-cursor symon symbol-overlay string-inflection string-edit-at-point spacemacs-whitespace-cleanup spacemacs-purpose-popwin spaceline space-doc restart-emacs request rainbow-delimiters quickrun popwin pcre2el password-generator paradox overseer org-superstar open-junk-file nameless multi-line macrostep lorem-ipsum link-hint inspector info+ indent-guide hybrid-mode hungry-delete holy-mode hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org helm-mode-manager helm-make helm-descbinds helm-comint helm-ag google-translate golden-ratio flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-evilified-state evil-escape evil-easymotion evil-collection evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav elisp-demos elisp-def editorconfig dumb-jump drag-stuff dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile all-the-icons aggressive-indent ace-link ace-jump-helm-line)))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   )
+  )
