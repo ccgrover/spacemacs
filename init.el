@@ -47,10 +47,7 @@ This function should only modify configuration layer settings."
      helm
 
      ;; Java config
-     (java :config
-           (add-hook 'java-mode-hook #'lsp-java-boot-lens-mode)
-           (add-hook 'lsp-mode-hook #'lsp-lens-mode)
-           :variables
+     (java :variables
            java-backend 'lsp)
      ;; visual debugger & test browser
      dap
@@ -661,8 +658,6 @@ before packages are loaded."
   ;; Projects in workspace folder are automatically discovered
   (setq projectile-project-search-path '(("~/workspace/" . 1)))
   (setq projectile-create-missing-test-files t)
-
-  (require 'lsp-java-boot)
 
   (spacemacs/declare-prefix-for-mode 'java-mode
     "mo" "cullen custom")
