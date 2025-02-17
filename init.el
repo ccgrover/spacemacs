@@ -32,13 +32,21 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(javascript
+   '(yaml
+     (python :variables
+             python-backend 'anaconda
+             python-formatter 'yapf)
+     csv
+     javascript
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
      ;; `M-m f e R' (Emacs style) to install them.
      ;; ----------------------------------------------------------------
-     ;; auto-completion
+     (auto-completion :variables
+                      ;; "optimal" for LSP
+                      auto-completion-idle-delay 0.0
+                      auto-completion-minimum-prefix-length 1)
      ;; better-defaults
      yaml
      markdown
@@ -56,11 +64,12 @@ This function should only modify configuration layer settings."
           ;; ↓↓↓ CONFIRMED FINE ↓↓↓
           lsp-sonarlint t
           lsp-sonarlint-java-enabled t
+          lsp-sonarlint-enabled-analyzers '("java")
           lsp-java-format-enabled  nil
           lsp-java-configuration-runtimes
           '[
             (:name "JavaSE-17"
-                   :path "/usr/lib/jvm/java-17-openjdk/"
+                   :path "/home/cgrover/.sdkman/candidates/java/17.0.13-tem/"
                    :default t)
             ]
           lsp-java-maven-download-sources t
@@ -662,6 +671,9 @@ configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
 
+  ;; Set up my org repo to populate the agenda view
+  (setq org-agenda-files '("~/workspace/cullen-org"))
+
   ;; Projects in workspace folder are automatically discovered
   (setq projectile-project-search-path '(("~/workspace/" . 1)))
   (setq projectile-create-missing-test-files t)
@@ -676,6 +688,28 @@ before packages are loaded."
     'java-mode "ov" #'cullen/maven-verify)
   (spacemacs/set-leader-keys-for-major-mode
     'java-mode "oc" #'cullen/test-compile)
+
+  ;; treesit config
+  (add-hook 'java-ts-mode-hook 'lsp)
+
+  (setq treesit-language-source-alist
+        '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+          (cmake "https://github.com/uyha/tree-sitter-cmake")
+          (css "https://github.com/tree-sitter/tree-sitter-css")
+          (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+          (go "https://github.com/tree-sitter/tree-sitter-go")
+          (html "https://github.com/tree-sitter/tree-sitter-html")
+          (java "https://github.com/tree-sitter/tree-sitter-java")
+          (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+          (json "https://github.com/tree-sitter/tree-sitter-json")
+          (kotlin "https://github.com/fwcd/tree-sitter-kotlin")
+          (make "https://github.com/alemuller/tree-sitter-make")
+          (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+          (python "https://github.com/tree-sitter/tree-sitter-python")
+          (toml "https://github.com/tree-sitter/tree-sitter-toml")
+          (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+          (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+          (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
   )
 
 
@@ -691,8 +725,59 @@ This function is called at the very end of Spacemacs initialization."
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
+   '(helm-grep-ignored-directories
+     '("SCCS/" "RCS/" "CVS/" "target/" "server/target" "MCVS/" ".svn/" ".git/" ".hg/"
+       ".bzr/" "_MTN/" "_darcs/" "{arch}/" ".gvfs/"))
    '(package-selected-packages
-     '(lsp-sonarlint alect-themes flatland-theme kaolin-themes autothemer csv-mode company-lua lua-mode company-restclient know-your-http-well ob-http ob-restclient restclient-helm restclient company-web web-completion-data counsel-css emmet-mode helm-css-scss pug-mode sass-mode haml-mode scss-mode slim-mode tagedit web-mode add-node-modules-path counsel-gtags counsel swiper ivy ggtags impatient-mode htmlize import-js grizzl js-doc js2-refactor multiple-cursors livid-mode nodejs-repl npm-mode prettier-js skewer-mode js2-mode simple-httpd tern web-beautify yaml-mode company-emoji company emoji-cheat-sheet-plus gh-md markdown-toc markdown-mode valign vmd-mode ws-butler writeroom-mode winum which-key vundo volatile-highlights vim-powerline vi-tilde-fringe uuidgen undo-fu-session undo-fu treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil toc-org term-cursor symon symbol-overlay string-inflection string-edit-at-point spacemacs-whitespace-cleanup spacemacs-purpose-popwin spaceline space-doc restart-emacs request rainbow-delimiters quickrun popwin pcre2el password-generator paradox overseer org-superstar open-junk-file nameless multi-line macrostep lorem-ipsum link-hint inspector info+ indent-guide hybrid-mode hungry-delete holy-mode hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org helm-mode-manager helm-make helm-descbinds helm-comint helm-ag google-translate golden-ratio flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-evilified-state evil-escape evil-easymotion evil-collection evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav elisp-demos elisp-def editorconfig dumb-jump drag-stuff dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile all-the-icons aggressive-indent ace-link ace-jump-helm-line)))
+     '(ace-jump-helm-line ace-link add-node-modules-path aggressive-indent
+                          alect-themes all-the-icons anaconda-mode auto-compile
+                          auto-highlight-symbol autothemer blacken
+                          centered-cursor-mode clean-aindent-mode code-cells
+                          column-enforce-mode company company-anaconda
+                          company-emoji company-lua company-restclient company-web
+                          concurrent counsel counsel-css counsel-gtags csv-mode
+                          ctable cython-mode define-word devdocs diminish
+                          dired-quick-sort dotenv-mode drag-stuff dumb-jump
+                          editorconfig elisp-def elisp-demos elisp-slime-nav
+                          emmet-mode emoji-cheat-sheet-plus emr epc eval-sexp-fu
+                          evil-anzu evil-args evil-cleverparens evil-collection
+                          evil-easymotion evil-escape evil-evilified-state
+                          evil-exchange evil-goggles evil-iedit-state
+                          evil-indent-plus evil-lion evil-lisp-state evil-matchit
+                          evil-mc evil-nerd-commenter evil-numbers evil-surround
+                          evil-textobj-line evil-tutor evil-unimpaired
+                          evil-visual-mark-mode evil-visualstar expand-region
+                          eyebrowse fancy-battery flatland-theme flx-ido
+                          flycheck-elsa flycheck-package ggtags gh-md golden-ratio
+                          google-translate grizzl haml-mode helm-ag helm-comint
+                          helm-cscope helm-css-scss helm-descbinds helm-make
+                          helm-mode-manager helm-org helm-projectile helm-purpose
+                          helm-pydoc helm-swoop helm-themes helm-xref hide-comnt
+                          highlight-indentation highlight-numbers
+                          highlight-parentheses hl-todo holy-mode htmlize
+                          hungry-delete hybrid-mode impatient-mode import-js
+                          importmagic indent-guide info+ inspector ivy js-doc
+                          js2-mode js2-refactor kaolin-themes know-your-http-well
+                          link-hint live-py-mode livid-mode load-env-vars
+                          lorem-ipsum lsp-pyright lsp-sonarlint lua-mode macrostep
+                          markdown-mode markdown-toc multi-line multiple-cursors
+                          nameless nodejs-repl nose npm-mode ob-http ob-restclient
+                          open-junk-file org-superstar overseer paradox
+                          password-generator pcre2el pip-requirements pipenv
+                          pippel poetry popwin prettier-js pug-mode py-isort pydoc
+                          pyenv-mode pylookup pytest pythonic pyvenv quickrun
+                          rainbow-delimiters request restart-emacs restclient
+                          restclient-helm sass-mode scss-mode simple-httpd
+                          skewer-mode slim-mode space-doc spaceline
+                          spacemacs-purpose-popwin spacemacs-whitespace-cleanup
+                          sphinx-doc string-edit-at-point string-inflection swiper
+                          symbol-overlay symon tagedit term-cursor tern toc-org
+                          treemacs-evil treemacs-icons-dired treemacs-persp
+                          treemacs-projectile undo-fu undo-fu-session uuidgen
+                          valign vi-tilde-fringe vim-powerline vmd-mode
+                          volatile-highlights vundo web-beautify
+                          web-completion-data web-mode which-key winum
+                          writeroom-mode ws-butler xcscope yaml-mode yapfify)))
   (custom-set-faces
    ;; custom-set-faces was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
