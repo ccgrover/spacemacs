@@ -725,9 +725,6 @@ This function is called at the very end of Spacemacs initialization."
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
-   '(helm-grep-ignored-directories
-     '("SCCS/" "RCS/" "CVS/" "target/" "server/target" "MCVS/" ".svn/" ".git/" ".hg/"
-       ".bzr/" "_MTN/" "_darcs/" "{arch}/" ".gvfs/"))
    '(package-selected-packages
      '(ace-jump-helm-line ace-link add-node-modules-path aggressive-indent
                           alect-themes all-the-icons anaconda-mode auto-compile
